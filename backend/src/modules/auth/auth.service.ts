@@ -10,6 +10,10 @@ import type { AuthResponse, LoginDTO, RegisterDTO } from "./auth.types.js";
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
 
 export const register = async (data: RegisterDTO): Promise<AuthResponse> => {
+ console.log("REGISTER DATA:");
+ console.log(data);
+  console.log("PASSWORD:", data?.password);
+  
   const existingUser = await findUserByEmail(data.email);
 
   if (existingUser) {

@@ -2,11 +2,11 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoginDTO, LoginDTOSchema } from '@/app/schema/auth.schema'
 import { useLogin } from '@/app/services/auth/auth.hooks'
+import { SigninDTO, SigninSchema } from '@/app/schema/auth.schema'
 
 export default function SignInPage() {
     const [loading, setLoading] = useState(false)
@@ -17,12 +17,12 @@ export default function SignInPage() {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<LoginDTO>({
-        resolver: zodResolver(LoginDTOSchema),
+    } = useForm<SigninDTO>({
+        resolver: zodResolver(SigninSchema),
         mode: "onTouched"
     })
 
-    const onSubmit = async (data: LoginDTO) => {
+    const onSubmit = async (data: SigninDTO) => {
         setLoading(true)
 
         try {

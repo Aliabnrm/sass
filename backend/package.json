@@ -1,7 +1,7 @@
 {
   "name": "sass",
   "type": "module",
-  "packageManager": "yarn@4.9.2",
+  "packageManager": "pnpm@9.12.3",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",

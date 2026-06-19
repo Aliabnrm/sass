@@ -1,47 +1,62 @@
-import { z } from 'zod'
+import { z } from "zod";
 
+// ========================
+// USER
+// ========================
 export const UserSchema = z.object({
   id: z.string(),
   email: z.email(),
   first_name: z.string().optional(),
   last_name: z.string().optional(),
-})
+});
 
-export const RegisterDTOSchema = z.object({
+// ========================
+// SIGN UP
+// ========================
+export const SignupSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
   first_name: z.string().optional(),
   last_name: z.string().optional(),
-})
+});
 
-export const LoginDTOSchema = z.object({
+// ========================
+// SIGN IN
+// ========================
+export const SigninSchema = z.object({
   email: z.email(),
   password: z.string(),
-})
+});
 
-export const RefreshDTOSchema = z.object({
+// ========================
+// REFRESH
+// ========================
+export const RefreshSchema = z.object({
   refreshToken: z.string(),
-})
+});
 
+// ========================
+// RESPONSE
+// ========================
 export const AuthResponseSchema = z.object({
   user: UserSchema,
   accessToken: z.string(),
   refreshToken: z.string(),
-})
+});
 
 export const RefreshResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
-})
+});
 
-export type User = z.infer<typeof UserSchema>
+// ========================
+// TYPES
+// ========================
+export type User = z.infer<typeof UserSchema>;
 
-export type LoginDTO = z.infer<typeof LoginDTOSchema>
+export type SignupDTO = z.infer<typeof SignupSchema>;
+export type SigninDTO = z.infer<typeof SigninSchema>;
+export type RefreshDTO = z.infer<typeof RefreshSchema>;
 
-export type RefreshDTO = z.infer<typeof RefreshDTOSchema>
-
-export type RegisterDTO = z.infer<typeof RegisterDTOSchema>
-
-export type AuthResponse = z.infer<typeof AuthResponseSchema>
-
-export type RefreshResponse = z.infer<typeof RefreshResponseSchema>
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type RefreshResponse = z.infer<typeof RefreshResponseSchema>;

@@ -1,10 +1,10 @@
 import cors from "cors";
-import express from "express";
 import cookieParser from "cookie-parser";
+import express, { type Express } from "express";
 import authRoutes from "./modules/auth/auth.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 
-const app = express();
+const app: Express = express();
 
 app.use(cors());
 app.use(express.json());

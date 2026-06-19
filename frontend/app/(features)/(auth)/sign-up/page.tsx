@@ -1,35 +1,36 @@
 "use client";
+
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { LockIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { SignupDTO, SignupSchema } from "@/app/schema/auth.schema";
+import { useRegister } from "@/app/services/auth/auth.hooks";
 
 
 const SignUpPage = () => {
     const router = useRouter();
 
+    const { mutate: register, isPending } = useRegister();
+
     const {
-        register,
+        register: formRegister,
         handleSubmit,
         formState: { errors },
-    } = useForm<SignupSchemaType>({ resolver: zodResolver(SignupSchema), mode: "onTouched" });
+    } = useForm<SignupDTO>({ resolver: zodResolver(SignupSchema), mode: "onTouched" });
 
-    const onSubmit = async (data: SignupSchemaType) => {
-
-        const res = await fetch("/api/auth/register", {
-            method: "POST",
-            credentials: "include",
-            body: JSON.stringify(data),
-            headers: { "Content-Type": "application/json" },
+    const onSubmit = (data: SignupDTO) => {
+        register(data, {
+            onSuccess: () => {
+                router.push("/");
+            },
+            onError: (error: any) => {
+                alert(error?.message || "Registration failed");
+            },
         });
-
-        if (res.ok) {
-            router.push("/dashboard");
-        } else {
-            const error = await res.json();
-            alert(error.error);
-        }
     };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
             <div className="w-full max-w-md space-y-8 bg-white p-8 shadow rounded-lg">
@@ -44,7 +45,7 @@ const SignUpPage = () => {
                             <label className="sr-only">Email address</label>
                             <input
                                 type="email"
-                                {...register("email")}
+                                {...formRegister("email")}
                                 required
                                 className="relative block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
                                 placeholder="Email address"
@@ -59,7 +60,7 @@ const SignUpPage = () => {
                             <label className="sr-only">Password</label>
                             <input
                                 type="password"
-                                {...register("password")}
+                                {...formRegister("password")}
                                 required
                                 className="relative block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
                                 placeholder="Password"
@@ -75,9 +76,10 @@ const SignUpPage = () => {
                     <div>
                         <button
                             type="submit"
+                            disabled={isPending}
                             className="group relative flex w-full justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                            <LockClosedIcon className="h-5 w-5 text-blue-100 group-hover:text-white mr-1" />
+                            <LockIcon className="h-5 w-5 text-blue-100 group-hover:text-white mr-1" />
                             Sign up
                         </button>
                     </div>

@@ -6,24 +6,22 @@ import {
 } from './auth.api'
 import { useApiClient } from '../useApiClient'
 import { useMutation } from '@tanstack/react-query'
-import { LoginDTO, RefreshDTO, RegisterDTO } from '@/app/schema/auth.schema'
+import { RefreshDTO, SigninDTO, SignupDTO } from '@/app/schema/auth.schema'
 
 export const useLogin = () => {
   const api = useApiClient()
 
   return useMutation({
-    mutationFn: (data: LoginDTO) =>
-      loginApi(api, data),
-  })
+    mutationFn: (data: SigninDTO) => loginApi(api, data),
+  });
 }
 
 export const useRegister = () => {
   const api = useApiClient()
 
   return useMutation({
-    mutationFn: (data: RegisterDTO) =>
-      registerApi(api, data),
-  })
+    mutationFn: (data: SignupDTO) => registerApi(api, data),
+  });
 }
 
 export const useRefreshToken = () => {
