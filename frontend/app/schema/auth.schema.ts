@@ -6,8 +6,8 @@ import { z } from "zod";
 export const UserSchema = z.object({
   id: z.string(),
   email: z.email(),
-  first_name: z.string().optional(),
-  last_name: z.string().optional(),
+  first_name: z.string().nullable().optional(),
+  last_name: z.string().nullable().optional(),
 });
 
 // ========================
@@ -16,8 +16,8 @@ export const UserSchema = z.object({
 export const SignupSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
-  first_name: z.string().optional(),
-  last_name: z.string().optional(),
+  first_name: z.string().optional().nullable(),
+  last_name: z.string().optional().nullable(),
 });
 
 // ========================

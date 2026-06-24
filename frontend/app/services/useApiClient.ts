@@ -1,95 +1,100 @@
-import axios from 'axios'
-import { useMemo } from 'react'
-import { coreApi } from './coreApi'
-import type { AxiosInstance, AxiosError } from 'axios'
+import axios from "axios";
+import { API_BASE_PATH } from "../entities/baseUrl";
+import { tokenStore } from "../lib/auth/tokenStore";
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-type ApiErrorBody = {
-  errorMessage?: string
-  message?: string
-  detail?: string
-  title?: string
-  errorCode?: string
-  code?: string
-}
+const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-type NormalizedApiError = {
-  status: number
-  message: string
-  code?: string
-}
+const api = axios.create({
+  baseURL: `${backendUrl}${API_BASE_PATH}`,
+  withCredentials: true,
+});
 
-export const useApiClient = (): AxiosInstance => {
-  const api = useMemo(() => {
-    // Create a fresh axios instance per hook usage to avoid stacking interceptors
-    // on the shared coreApi instance.
-    const instance = axios.create(coreApi.defaults)
+let isRefreshing = false;
 
-    // REQUEST INTERCEPTOR
-    instance.interceptors.request.use(config => {
-      const token =
-        typeof window !== 'undefined'
-          ? window.localStorage.getItem('accessToken')
-          : null
+let failedQueue: {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+}[] = [];
 
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
+const processQueue = (error: unknown, token?: string) => {
+  failedQueue.forEach((promise) => {
+    if (error) {
+      promise.reject(error);
+    } else {
+      promise.resolve(token!);
+    }
+  });
 
-      if (!(config.data instanceof FormData)) {
-        config.headers['Content-Type'] = 'application/json'
-      }
+  failedQueue = [];
+};
 
-      config.headers.accept = '*/*'
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = tokenStore.get();
 
-      return config
-    })
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-    // RESPONSE INTERCEPTOR
-    instance.interceptors.response.use(
-      res => ({
-        ...res,
-        data: res.data?.item ?? res.data,
-      }),
-      (error: AxiosError<ApiErrorBody> | NormalizedApiError) => {
-        if ('status' in error && error.status) {
-          return Promise.reject(error)
-        }
+  return config;
+});
 
-        if (!error.response) {
-          return Promise.reject({
-            status: 0,
-            message: 'Network error',
-          })
-        }
+api.interceptors.response.use(
+  (response) => response,
 
-        const { status, data } = error.response
+  async (error: AxiosError) => {
+    const originalRequest: any = error.config;
 
-        // Unified Error Format
-        const normalizedError = {
-          status,
-          message:
-            data?.errorMessage ||
-            data?.message ||
-            data?.detail ||
-            data?.title ||
-            'Unknown error',
-          code: data?.errorCode || data?.code,
-        }
+    if (error.response?.status !== 401 || originalRequest?._retry) {
+      return Promise.reject(error);
+    }
 
-        if (status === 401) {
-          window.localStorage.removeItem('accessToken')
-        }
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({
+          resolve: (token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
 
-        if (status === 403) {
-          console.warn('Permission denied')
-        }
+            resolve(api(originalRequest));
+          },
+          reject,
+        });
+      });
+    }
 
-        return Promise.reject(normalizedError)
-      },
-    )
+    originalRequest._retry = true;
+    isRefreshing = true;
 
-    return instance
-  }, [])
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}${API_BASE_PATH}/auth/refresh`,
+        {},
+        {
+          withCredentials: true,
+        },
+      );
 
-  return api
-}
+      const newAccessToken = response.data.accessToken;
+
+      tokenStore.set(newAccessToken);
+
+      processQueue(null, newAccessToken);
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+      return api(originalRequest);
+    } catch (refreshError) {
+      processQueue(refreshError);
+
+      tokenStore.clear();
+
+      window.location.href = "/sign-in";
+
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
+
+export default api;

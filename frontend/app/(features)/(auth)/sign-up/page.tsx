@@ -5,8 +5,9 @@ import { LockIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SignupDTO, SignupSchema } from "@/app/schema/auth.schema";
+import { tokenStore } from "@/app/lib/auth/tokenStore";
 import { useRegister } from "@/app/services/auth/auth.hooks";
+import { SignupDTO, SignupSchema } from "@/app/schema/auth.schema";
 
 
 const SignUpPage = () => {
@@ -15,16 +16,18 @@ const SignUpPage = () => {
     const { mutate: register, isPending } = useRegister();
 
     const {
-        register: formRegister,
         handleSubmit,
         formState: { errors },
+        register: formRegister,
     } = useForm<SignupDTO>({ resolver: zodResolver(SignupSchema), mode: "onTouched" });
 
     const onSubmit = (data: SignupDTO) => {
         register(data, {
-            onSuccess: () => {
+            onSuccess: (response) => {
+                tokenStore.set(response.accessToken);
                 router.push("/");
             },
+
             onError: (error: any) => {
                 alert(error?.message || "Registration failed");
             },

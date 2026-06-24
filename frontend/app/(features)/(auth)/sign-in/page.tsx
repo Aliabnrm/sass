@@ -1,17 +1,16 @@
 
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { tokenStore } from '@/app/lib/auth/tokenStore'
 import { useLogin } from '@/app/services/auth/auth.hooks'
 import { SigninDTO, SigninSchema } from '@/app/schema/auth.schema'
 
 export default function SignInPage() {
-    const [loading, setLoading] = useState(false)
-    const router = useRouter()
     const login = useLogin()
+    const router = useRouter()
 
     const {
         register,
@@ -23,17 +22,17 @@ export default function SignInPage() {
     })
 
     const onSubmit = async (data: SigninDTO) => {
-        setLoading(true)
 
         try {
-            const result = await login.mutateAsync(data)
-            window.localStorage.setItem('accessToken', result.accessToken)
-            window.localStorage.setItem('refreshToken', result.refreshToken)
-            router.push('/')
-        } finally {
-            setLoading(false)
+            const response = await login.mutateAsync(data);
+
+            tokenStore.set(response.accessToken);
+
+            router.push("/");
+        } catch (error: any) {
+            alert(error?.message || "Login failed");
         }
-    }
+    };
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
@@ -70,10 +69,10 @@ export default function SignInPage() {
                     <div>
                         <button
                             type="submit"
-                            disabled={loading}
-                            className={`group relative flex w-full justify-center rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                            disabled={login.isPending}
+                            className={`group relative flex w-full justify-center rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${login.isPending ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                                 }`}          >
-                            {loading ? "در حال ورود ..." : "Sign in"}
+                            {login.isPending ? "در حال ورود ..." : "Sign in"}
                         </button>
                         <div className="flex w-full flex-row items-center justify-center gap-1 text-sm text-gray-600 mt-8">
                             <div className=""> If you do not have an Account?</div>
