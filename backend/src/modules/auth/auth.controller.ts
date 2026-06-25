@@ -28,7 +28,6 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   res.cookie("refreshToken", result.refreshToken, REFRESH_COOKIE_OPTIONS);
 
   return res.status(200).json({
-    user: result.user,
     accessToken: result.accessToken,
   });
 });

@@ -10,10 +10,6 @@ import type { AuthResponse, LoginDTO, RegisterDTO } from "./auth.types.js";
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
 
 export const register = async (data: RegisterDTO): Promise<AuthResponse> => {
- console.log("REGISTER DATA:");
- console.log(data);
-  console.log("PASSWORD:", data?.password);
-  
   const existingUser = await findUserByEmail(data.email);
 
   if (existingUser) {
@@ -24,8 +20,13 @@ export const register = async (data: RegisterDTO): Promise<AuthResponse> => {
 
   const user = await createUser(data, passwordHash);
 
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
+
+  await saveRefreshToken(user.id, refreshToken, expiresAt);
 
   return {
     user: {
@@ -52,8 +53,13 @@ export const login = async (data: LoginDTO): Promise<AuthResponse> => {
     throw new Error("Invalid credentials");
   }
 
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
+
+  await saveRefreshToken(user.id, refreshToken, expiresAt);
 
   return {
     user: {
