@@ -3,7 +3,7 @@ import { API_BASE_PATH } from "../entities/baseUrl";
 import { tokenStore } from "../lib/auth/tokenStore";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const backendUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const api = axios.create({
   baseURL: `${backendUrl}${API_BASE_PATH}`,
@@ -45,7 +45,13 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest: any = error.config;
 
-    if (error.response?.status !== 401 || originalRequest?._retry) {
+    const isAuthEndpoint = originalRequest.url?.includes("/auth");
+
+    if (
+      error.response?.status !== 401 ||
+      originalRequest?._retry ||
+      isAuthEndpoint
+    ) {
       return Promise.reject(error);
     }
 

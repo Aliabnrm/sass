@@ -3,17 +3,26 @@ import cookieParser from "cookie-parser";
 import express, { type Express } from "express";
 import authRoutes from "./modules/auth/auth.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
+import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
+import { notFoundMiddleware } from "./middleware/notFound.middleware.js";
 
 const app: Express = express();
 
 app.use(cors());
+
+app.use(requestIdMiddleware);
+
 app.use(express.json());
+
 app.use(cookieParser());
 
 // 🔐 Auth API
 app.use("/api/v1/auth", authRoutes);
 
+app.use(notFoundMiddleware);
+
 app.use(errorMiddleware);
+
 
 app.get("/", (_, res) => {
   res.send("Server is running");

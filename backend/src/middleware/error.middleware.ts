@@ -1,23 +1,33 @@
-import { AppError } from "../error/AppError.js";
 import type { Request, Response, NextFunction } from "express";
+import { AppError } from "../errors/AppError.js";
+import { logger } from "../logger/logger.js";
 
 export const errorMiddleware = (
-  err: Error,
+  err: unknown,
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
+  let error: AppError;
+
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-    });
+    error = err;
+  } else if (err instanceof Error) {
+    error = new AppError(err.message, 500, "INTERNAL_SERVER_ERROR");
+  } else {
+    error = new AppError("خطای داخلی سرور", 500, "INTERNAL_SERVER_ERROR");
   }
 
-  console.error(err);
+  logger.error({
+    requestId: req.requestId,
+    message: error.message,
+    stack: err instanceof Error ? err.stack : undefined,
+  });
 
-  return res.status(500).json({
+  return res.status(error.statusCode).json({
     success: false,
-    message: "Internal Server Error",
+    code: error.code,
+    message: error.message,
+    requestId: req.requestId,
   });
 };

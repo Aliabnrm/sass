@@ -1,14 +1,15 @@
 import type { Request, Response } from "express";
 import * as authService from "./auth.service.js";
-import { AppError } from "../../error/AppError.js";
+import { AppError } from "../../errors/AppError.js";
 import { catchAsync } from "../../utils/catchAsync.js";
+import { AuthenticationError } from "../../errors/AuthenticationError.js";
 
 const REFRESH_COOKIE_OPTIONS = {
   path: "/",
   httpOnly: true,
   sameSite: "lax" as const,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.NODE_ENV === "development",
 };
 
 export const register = catchAsync(async (req: Request, res: Response) => {
@@ -36,7 +37,7 @@ export const refresh = catchAsync(async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    throw new AppError("Refresh token not found", 401);
+    throw new AuthenticationError("رفرش توکن یافت نشد");
   }
 
   const result = await authService.refresh(refreshToken);

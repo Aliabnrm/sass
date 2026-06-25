@@ -8,12 +8,14 @@ import {
 } from "./auth.repository.js";
 import type { AuthResponse, LoginDTO, RegisterDTO } from "./auth.types.js";
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
+import { AuthenticationError } from "../../errors/AuthenticationError.js";
+import { ConflictError } from "../../errors/ConflictError.js";
 
 export const register = async (data: RegisterDTO): Promise<AuthResponse> => {
   const existingUser = await findUserByEmail(data.email);
 
   if (existingUser) {
-    throw new Error("Email already exists");
+    throw new ConflictError("کاربری با این ایمیل وجود دارد");
   }
 
   const passwordHash = await bcrypt.hash(data.password, 10);
@@ -44,7 +46,7 @@ export const login = async (data: LoginDTO): Promise<AuthResponse> => {
   const user = await findUserByEmail(data.email);
 
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new AuthenticationError("ایمیل یا رمز عبور اشتباه است");
   }
 
   const isValid = await bcrypt.compare(data.password, user.password_hash);
@@ -84,12 +86,12 @@ export const refresh = async (refreshToken: string) => {
 
   // 2. بررسی revoke
   if (storedToken.is_revoked) {
-    throw new Error("Token revoked");
+    throw new AuthenticationError("نشست کاربر نامعتبر است");
   }
 
   // 3. بررسی expiry
   if (new Date(storedToken.expires_at) < new Date()) {
-    throw new Error("Token expired");
+    throw new AuthenticationError("نشست کاربر منقضی شده است");
   }
 
   const userId = storedToken.user_id;

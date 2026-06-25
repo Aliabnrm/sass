@@ -1,15 +1,6 @@
 import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        userId: string;
-      };
-    }
-  }
-}
+import { AuthenticationError } from "../errors/AuthenticationError.js";
 
 export const authMiddleware = (
   req: Request,
@@ -20,7 +11,7 @@ export const authMiddleware = (
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
+      throw new AuthenticationError("توکن ارسال نشده است");
     }
 
     const token = authHeader.split(" ")[1];
@@ -38,7 +29,7 @@ export const authMiddleware = (
     };
 
     next();
-  } catch (err) {
-    return res.status(401).json({ message: "Unauthorized" });
+  } catch (error) {
+    next(new AuthenticationError("توکن نامعتبر است"));
   }
 };
