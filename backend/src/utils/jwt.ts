@@ -5,7 +5,7 @@ const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 
 // generate
 export const generateAccessToken = (userId: string) => {
-  return jwt.sign({ userId }, ACCESS_SECRET, { expiresIn: "10s" });
+  return jwt.sign({ userId }, ACCESS_SECRET, { expiresIn: "15m" });
 };
 
 import { randomUUID } from "crypto";
